@@ -2,85 +2,98 @@ import math
 import pandas as pd
 class Statistic:
     arr = []
+    table_group = None
     table = None
     k = 0
     h = 0
-    def __init__(self, arr: list = arr, table = table, k: int = k, h: int = h) -> None:
+    check = False
+    def __init__(self, arr: list = arr, table_group = table_group, table = table, k: int = k, h: int = h, check: bool = check) -> None:
         self.__arr = arr if arr else []
+        self.__table_group = table_group
         self.__table = table
         self.__k = k
         self.__h = h
+        self.__check = check
 
     def setArray(self, arr: list):
         self.__arr = arr
 
     def disaggregate(self):
+        array = set(self.__arr)
+        n = len(array)
         k = math.ceil((2 * len(self.__arr)) ** (1/3)) #group number
-        h = math.ceil(((max(self.__arr) - min(self.__arr)) - (k - 1)) / k) #group distance
-        self.__k = k
-        self.__h = h
+        if n > k and len(self.__arr) > 10:
+            h = math.ceil(((max(self.__arr) - min(self.__arr)) - (k - 1)) / k) #group distance
+            self.__k = k
+            self.__h = h
+        else:
+            self.__k = n
+            self.__h = 0
+            self.__check = True
         return self.__k, self.__h
     
     def createTable(self):
-        k, h = self.disaggregate()
-        
-        # Calculate the element for each group
-        group_element = []
-        for i in range(k):
-            if (i+1) < k:
-                lower_bound = min(self.__arr) + i * h
-                upper_bound = lower_bound + h
-                group_element.append(str(lower_bound) + " - " + str(upper_bound))
-            else:
-                lower_bound = min(self.__arr) + i * h
-                upper_bound = max(self.__arr)
-                group_element.append(str(lower_bound) + " - " + str(upper_bound))
-        
-        # Calculate the representive element for each group
-        representative_element = []
-        for i in range(k):
-            if (i+1) < k:
-                lower_bound = min(self.__arr) + i * h
-                upper_bound = lower_bound + h
-                representative_element.append((upper_bound + lower_bound) / 2)
-            else:
-                lower_bound = min(self.__arr) + i * h
-                upper_bound = max(self.__arr)
-                representative_element.append((upper_bound + lower_bound) / 2)
+        if self.__check: 
+            
+        else:
+            k, h = self.disaggregate()
+            # Calculate the element for each group
+            group_element = []
+            for i in range(k):
+                if (i+1) < k:
+                    lower_bound = min(self.__arr) + i * h
+                    upper_bound = lower_bound + h
+                    group_element.append(str(lower_bound) + " - " + str(upper_bound))
+                else:
+                    lower_bound = min(self.__arr) + i * h
+                    upper_bound = max(self.__arr)
+                    group_element.append(str(lower_bound) + " - " + str(upper_bound))
+            
+            # Calculate the representive element for each group
+            representative_element = []
+            for i in range(k):
+                if (i+1) < k:
+                    lower_bound = min(self.__arr) + i * h
+                    upper_bound = lower_bound + h
+                    representative_element.append((upper_bound + lower_bound) / 2)
+                else:
+                    lower_bound = min(self.__arr) + i * h
+                    upper_bound = max(self.__arr)
+                    representative_element.append((upper_bound + lower_bound) / 2)
 
-        # Calculate the frequency for each group
-        frequency = []
-        for i in range(k):
-            if (i+1) < k:
-                lower_bound = min(self.__arr) + i * h
-                upper_bound = lower_bound + h
-                frequency.append(len(list(filter(lambda x: lower_bound <= x < upper_bound, self.__arr))))
-            else:
-                lower_bound = min(self.__arr) + i * h
-                frequency.append(len(list(filter(lambda x: lower_bound <= x, self.__arr))))
+            # Calculate the frequency for each group
+            frequency = []
+            for i in range(k):
+                if (i+1) < k:
+                    lower_bound = min(self.__arr) + i * h
+                    upper_bound = lower_bound + h
+                    frequency.append(len(list(filter(lambda x: lower_bound <= x < upper_bound, self.__arr))))
+                else:
+                    lower_bound = min(self.__arr) + i * h
+                    frequency.append(len(list(filter(lambda x: lower_bound <= x, self.__arr))))
 
-        # Calculate the cumulative frequency
-        cumulative_frequency = []
-        for i in range (k):
-            if (i+1) == 1:
-                cumulative_frequency.append(frequency[i])
-            else:
-                cumulative_frequency.append((frequency[i] + cumulative_frequency[i-1]))
+            # Calculate the cumulative frequency
+            cumulative_frequency = []
+            for i in range (k):
+                if (i+1) == 1:
+                    cumulative_frequency.append(frequency[i])
+                else:
+                    cumulative_frequency.append((frequency[i] + cumulative_frequency[i-1]))
 
-        # Create Dataframe
-        df = pd.DataFrame({'group element': group_element, 'representative element': representative_element, 'frequency': frequency, 'cumulative frequency' : cumulative_frequency})
-        self.__table = df
-        return df
+            # Create Dataframe
+            df = pd.DataFrame({'group element': group_element, 'representative element': representative_element, 'frequency': frequency, 'cumulative frequency' : cumulative_frequency})
+            self.__table_group = df
+            return df
     
     def expectation(self):
-        self.__table
+        self.__table_group
         n = len(self.__arr)
-        X = (1/n) * sum(self.__table['representative element'] * self.__table['frequency'])
+        X = (1/n) * sum(self.__table_group['representative element'] * self.__table_group['frequency'])
         return X
     
     def variance(self):
         X = self.expectation()
-        return sum((self.__table['representative element'] - X) ** 2)/(len(self.__arr) - 1) 
+        return sum((self.__table_group['representative element'] - X) ** 2)/(len(self.__arr) - 1) 
     
     def standardDeviation(self):
         X = self.variance()
@@ -88,30 +101,34 @@ class Statistic:
 
     def mode(self):
         Mode = []
-        frequency_max = self.__table['frequency'].max()
-        max_index = self.__table[self.__table['frequency']==frequency_max].index
-        if len(max_index) == len(self.__table['frequency']):
+        frequency_max = self.__table_group['frequency'].max()
+        max_index = self.__table_group[self.__table_group['frequency']==frequency_max].index
+        if len(max_index) == len(self.__table_group['frequency']):
             return 'Không có yếu vị'
         else:
             for index in max_index:
-                lower_bound, upper_bound = self.__table['group element'][index].split('-')
+                lower_bound, upper_bound = self.__table_group['group element'][index].split('-')
                 hMo = float(upper_bound) - float(lower_bound)
-                nMo = self.__table['frequency'][index]
+                nMo = self.__table_group['frequency'][index]
 
-                nMoLower = self.__table['frequency'][index-1] if index != 0 else 0
-                nMoUpper = self.__table['frequency'][index+1] if index != len(self.__table['frequency']) - 1 else 0
+                nMoLower = self.__table_group['frequency'][index-1] if index != 0 else 0
+                nMoUpper = self.__table_group['frequency'][index+1] if index != len(self.__table_group['frequency']) - 1 else 0
                 if ((nMo - nMoLower) + (nMo - nMoUpper)) != 0:
+                    Mode.append(float(lower_bound) + (hMo*((nMo - nMoLower)/((nMo - nMoLower) + (nMo - nMoUpper)))))
+                else:
+                    nMoLower = 0
+                    nMoUpper = 0
                     Mode.append(float(lower_bound) + (hMo*((nMo - nMoLower)/((nMo - nMoLower) + (nMo - nMoUpper)))))
             return Mode 
 
     def median(self):
         n = len(self.__arr)
         xMed = 0
-        for i in self.__table['cumulative frequency']:
+        for i in self.__table_group['cumulative frequency']:
             if i > (n+1)/2:
-                Index = self.__table[self.__table['cumulative frequency'] == i].index[0]
-                xMed = self.__table.loc[Index]
-                SMedLower = self.__table['cumulative frequency'][Index - 1]
+                Index = self.__table_group[self.__table_group['cumulative frequency'] == i].index[0]
+                xMed = self.__table_group.loc[Index]
+                SMedLower = self.__table_group['cumulative frequency'][Index - 1]
                 break
         lower_bound, upper_bound = xMed['group element'].split('-')
         hMed = int(upper_bound) - int(lower_bound)
@@ -124,11 +141,11 @@ class Statistic:
         res = []
         while(count < 4):
             xMed = 0
-            for i in self.__table['cumulative frequency']:
+            for i in self.__table_group['cumulative frequency']:
                 if i > (count * (n+1)) / 4:
-                    Index = self.__table[self.__table['cumulative frequency'] == i].index[0]
-                    xMed = self.__table.loc[Index]
-                    SMedLower = self.__table['cumulative frequency'][Index - 1] if Index != 0 else 0
+                    Index = self.__table_group[self.__table_group['cumulative frequency'] == i].index[0]
+                    xMed = self.__table_group.loc[Index]
+                    SMedLower = self.__table_group['cumulative frequency'][Index - 1] if Index != 0 else 0
                     break
             lower_bound, upper_bound = xMed['group element'].split('-')
             hMed = int(upper_bound) - int(lower_bound)
