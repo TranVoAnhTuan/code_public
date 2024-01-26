@@ -141,7 +141,10 @@ class Statistic:
 
     def median(self):
         if self.__check:
-            
+            if self.__k % 2 == 0:
+                return (self.__table['X'][(self.__k /2)] + self.__table['X'][((self.__k + 2) /2)])/2
+            else:
+                return self.__table['X'][(self.__k + 1) / 2]
         else:
             xMed = 0
             for i in self.__table['cumulative frequency']:
@@ -156,22 +159,33 @@ class Statistic:
             return float(lower_bound) + (hMed * ((len(self.__arr)/2) - SMedLower)/nMed)
         
     def quantile(self):
-        n = len(self.__arr)
+
         count = 1
         res = []
-        while(count < 4):
-            xMed = 0
-            for i in self.__table['cumulative frequency']:
-                if i > (count * (n+1)) / 4:
-                    Index = self.__table[self.__table['cumulative frequency'] == i].index[0]
-                    xMed = self.__table.loc[Index]
-                    SMedLower = self.__table['cumulative frequency'][Index - 1] if Index != 0 else 0
-                    break
-            lower_bound, upper_bound = xMed['group element'].split('-')
-            hMed = int(upper_bound) - int(lower_bound)
-            nMed = xMed['frequency']
-            res.append(float(lower_bound) + (hMed * ((count*n/4) - SMedLower)/nMed))
-            count += 1
+        if self.__check:
+            while(count < 4):
+                if count != 2:
+                    res.append(self.__table['X'][math.floor((count * (self.__k + 1)) / 4)])
+                else:
+                    if self.__k % 2 == 0:
+                        res.append((self.__table['X'][(self.__k /2)] + self.__table['X'][((self.__k + 2) /2)])/2)
+                    else:
+                        res.append(self.__table['X'][(self.__k + 1) / 2])
+                count += 1
+        else:
+            while(count < 4):
+                xMed = 0
+                for i in self.__table['cumulative frequency']:
+                    if i > (count * (len(self.__arr)+1)) / 4:
+                        Index = self.__table[self.__table['cumulative frequency'] == i].index[0]
+                        xMed = self.__table.loc[Index]
+                        SMedLower = self.__table['cumulative frequency'][Index - 1] if Index != 0 else 0
+                        break
+                lower_bound, upper_bound = xMed['group element'].split('-')
+                hMed = int(upper_bound) - int(lower_bound)
+                nMed = xMed['frequency']
+                res.append(float(lower_bound) + (hMed * ((count*len(self.__arr)/4) - SMedLower)/nMed))
+                count += 1
         return res
 
     
