@@ -7,8 +7,6 @@ using namespace std;
 #define MOD 1000000007
 const int maxV = 1e6+1;
 int main(){
-  IOS;
 
   return 0;
 }
-
