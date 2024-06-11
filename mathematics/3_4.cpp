@@ -15,9 +15,11 @@ int main(){
   float y[20], x[20];
   fi(i,1,n){
     cin >> y[i];
+    // y[i] -= 7;
   }
   fi(i, 1, n){
     cin >> x[i];
+    // x[i] -= 14;
   }
   float _x = 0, _y = 0;
   fi(i, 1, n){
