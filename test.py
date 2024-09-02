@@ -14,8 +14,6 @@ print(f'Kích cỡ mẫu N = {len(arr)}')
 arr.sort()
 print('Mẫu sắp xếp:')
 print(arr)
-
-
 data = Statistic(arr)
 print(data.createTable())
 print(f'kỳ vọng {data.expectation()}')
